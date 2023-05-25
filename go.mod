@@ -1,4 +1,4 @@
-module github.com/pact-foundation/pact-plugin-template-golang // TODO: change me!
+module github.com/praveen-em/pact-foobar-plugin // TODO: change me!
 
 go 1.18
 
