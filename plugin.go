@@ -8,7 +8,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
-	plugin "github.com/praveen-em/pact-foobar-plugin"
+	plugin "github.com/praveen-em/pact-foobar-plugin/io_pact_plugin"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )

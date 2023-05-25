@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 
-	plugin "github.com/praveen-em/pact-foobar-plugin"
+	plugin "github.com/praveen-em/pact-foobar-plugin/io_pact_plugin"
 	"google.golang.org/grpc"
 )
 
