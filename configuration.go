@@ -14,6 +14,7 @@ import (
 type configuration struct {
 	Request  configurationRequest
 	Response configurationResponse
+	Message  structpb.Struct
 }
 
 type configurationRequest struct {
