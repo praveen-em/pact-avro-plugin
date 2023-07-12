@@ -11,7 +11,11 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
 
-require golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc // indirect
+require (
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
+	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc // indirect
+)
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
@@ -22,6 +26,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/stretchr/testify v1.8.2 // indirect
+	github.com/tidwall/gjson v1.14.4
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

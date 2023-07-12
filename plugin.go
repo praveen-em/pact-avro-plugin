@@ -1,20 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
-	"strings"
-
-	"github.com/antlr4-go/antlr/v4"
 	"github.com/google/uuid"
-	"github.com/hamba/avro/v2"
 	plugin "github.com/praveen-em/pact-foobar-plugin/io_pact_plugin"
-	parser "github.com/praveen-em/pact-foobar-plugin/antlr_auto_generated_parser"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -49,7 +44,7 @@ func (m *pluginServer) InitPlugin(ctx context.Context, req *plugin.InitPluginReq
 	return &plugin.InitPluginResponse{
 		Catalogue: []*plugin.CatalogueEntry{
 			{
-				Key:  "foobar",                        // TODO: changeme!
+				Key:  "foobar",                              // TODO: changeme!
 				Type: plugin.CatalogueEntry_CONTENT_MATCHER, // TODO: changeme!
 				Values: map[string]string{
 					"content-types": CONTENT_TYPE,
@@ -85,116 +80,35 @@ func (m *pluginServer) ConfigureInteraction(ctx context.Context, req *plugin.Con
 
 	// Extract the incoming plugin configuration from and validate it
 	// Remember - this structure is whatever you designed for your consumer interface
-	config, err := protoStructToConfigMap(req.ContentsConfig)
+	// config, err := protoStructToConfigMap(req.ContentsConfig)
 
-	log.Println("Parsed ContentsConfig:", config.Request.Body, config.Response.Body, err)
+	// log.Println("Parsed ContentsConfig:", config.Request.Body, config.Response.Body, err)
 
-	if err != nil {
-		log.Println("ERROR unmarshalling ContentsConfig from JSON:", err)
-		return &plugin.ConfigureInteractionResponse{
-			Error: err.Error(),
-		}, nil
-	}
+	// if err != nil {
+	// 	log.Println("ERROR unmarshalling ContentsConfig from JSON:", err)
+	// 	return &plugin.ConfigureInteractionResponse{
+	// 		Error: err.Error(),
+	// 	}, nil
+	// }
 
-	//temp start
-	contents := req.GetContentsConfig().GetFields()
-	schema, err := avro.Parse(contents["pact:schema"].GetStringValue())
-	if err != nil {
-		log.Println("ERROR parsing schema:", err.Error());
-		return nil, err
-	}
-	log.Println("schema string:", schema);
-
-	content := make(map[string]interface{})
-	rules := make(map[string]*plugin.MatchingRules)
+	config, err := parseContentsConfig(req)
 	
-
-
-	if _, ok := contents["pact:schema"]; !ok {
-		err := errors.New("Config item with key 'pact:schema' and the Avro schema string is required")
-		log.Println(err.Error())
+	if (err != nil) {
+		log.Println("ERROR while parsing ContentsConfig.", err)
 		return nil, err
 	}
-	
-	var (
-		matchType string
-		matchTypeConfig string
-		exampleValue interface{}
-	)
 
-	for key, value := range req.ContentsConfig.Fields {
-		log.Println("ContentsConfig interated:", key, value);
-		if !strings.HasPrefix(key, "pact:") {
-			switch value.Kind.(type) {
-			case *structpb.Value_StringValue:		
-				matchingRules := &plugin.MatchingRules{}	
-				matchingRule := &plugin.MatchingRule{}		
-				expression := value.GetStringValue()
-				matchType, matchTypeConfig, exampleValue = parseMatchingRuleDefinition(expression)
-				content[key] = exampleValue
-				matchingRule.Type = matchType
-				values := make(map[string]interface{})
-				values["match"] = matchType
-				if matchTypeConfig != "" {
-					matchTypeConfigKey := "format"
-					switch {
-					case matchType == "regex":
-						matchTypeConfigKey = "regex"
-					case matchType == "datetime" || matchType == "date" || matchType == "time" :
-						matchTypeConfigKey = "format"
-					case matchType == "contentType":
-						matchTypeConfigKey = "value"					
-					}
-					values[matchTypeConfigKey] = matchTypeConfig
-				}
-				
-				matchingRule.Values, err = structpb.NewStruct(values)
-				if (err != nil) {
-					log.Println("While converting from native go to structpb format: ", err)
-				}
-				
-				matchingRules.Rule = append(matchingRules.Rule, matchingRule)
-				rules[key] = matchingRules
-			}
-		}
-
-	}
-
-	log.Println("Native record:", content)
-	avroBinary, err := convertNativeToAvroBinary(schema, content)
-	if err != nil {
-		return nil, err
-	}
 	// v := []byte{0,2,3} //temp
 	// avroBinary := v //temp
-	//end temp
 
 	var interactions = make([]*plugin.InteractionResponse, 0)
-	if config.Request.Body != "" {
+	if config.contentBinary!= nil {
 		interactions = append(interactions, &plugin.InteractionResponse{
 			Contents: &plugin.Body{
 				ContentType: CONTENT_TYPE,
-				Content:     wrapperspb.Bytes([]byte(config.Request.Body)), // <- ensure format is correct
+				Content:     wrapperspb.Bytes(config.contentBinary), // <- ensure format is correct
 			},
-			PartName: "request",
-		})
-	}
-	if config.Response.Body != "" {
-		interactions = append(interactions, &plugin.InteractionResponse{
-			Contents: &plugin.Body{
-				ContentType: CONTENT_TYPE,
-				Content:     wrapperspb.Bytes([]byte(config.Response.Body)), // <- ensure format is correct
-			},
-			PartName: "response",
-		})
-	}
-	if req.ContentsConfig.Fields != nil {
-		interactions = append(interactions, &plugin.InteractionResponse{
-			Contents: &plugin.Body{
-				ContentType: CONTENT_TYPE,
-				Content:     wrapperspb.Bytes(avroBinary), // <- ensure format is correct
-			},
-			Rules: rules,
+			Rules: config.rules,
 		})
 	}
 
@@ -202,29 +116,6 @@ func (m *pluginServer) ConfigureInteraction(ctx context.Context, req *plugin.Con
 		Interaction: interactions,
 	}, nil
 }
-
-//start temp
-func parseMatchingRuleDefinition (expression string) (matchType string, matchTypeConfig string, exampleValue interface{}) {
-				is := antlr.NewInputStream(expression)
-				lexer := parser.NewMatchingRuleDefinitionLexer(is)
-				stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
-				p := parser.NewMatchingRuleDefinitionParser(stream)
-				tree := p.MatchingDefinition()
-				var listener MatchingRuleDefinitionListener
-				antlr.ParseTreeWalkerDefault.Walk(&listener, tree)
-				return listener.getParsedData()
-}
-
-func convertNativeToAvroBinary(schema avro.Schema, data map[string]interface{}) ([]byte, error) {
-	binary, err := avro.Marshal(schema, data)	
-	if err != nil {
-		log.Println("While trying to marshal from Native to Binary:", err.Error())
-		return nil, err
-	}
-
-	return binary, nil
-}
-//end temp
 
 // Now that the interaction has been configured, everytime the Pact mock
 // server (consumer side) or verifier (provider side) encounters a content
@@ -305,7 +196,8 @@ func (m *pluginServer) GenerateContent(ctx context.Context, req *plugin.Generate
 	return &plugin.GenerateContentResponse{
 		Contents: &plugin.Body{
 			ContentType: CONTENT_TYPE,
-			Content:     wrapperspb.Bytes([]byte(config.Response.Body)),
+			// Content:     wrapperspb.Bytes([]byte(config.Response.Body)),
+			Content:     wrapperspb.Bytes(config.contentBinary),
 		},
 	}, nil
 
@@ -536,5 +428,6 @@ func (m *pluginServer) VerifyInteraction(ctx context.Context, req *plugin.Verify
 
 // TODO: review signature and return errors
 func compare(actual string, expected string) bool {
-	return actual != expected
+	return !bytes.Equal([]byte(actual), []byte(expected))
+	// return actual != expected
 }
