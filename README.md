@@ -1,6 +1,6 @@
 # Pact Avro Plugin
 
-This plugin uses [Golang Plugin Template](https://github.com/pact-foundation/pact-plugin-template-golang) for the [Pact](http://docs.pact.io) framework. 
+This plugin supports Avro encoded message paylod for the [Pact](http://docs.pact.io) framework. It is still being built, not ready yet. 
 
 **Features:**
 
