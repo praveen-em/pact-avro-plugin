@@ -4,9 +4,11 @@ This plugin uses [Golang Plugin Template](https://github.com/pact-foundation/pac
 
 **Features:**
 
-* Work in Progress
+* Being built (WIP)
 
 ## Repository Structure
+
+WIP - needs updating
 
 ```
 ├── go.mod            # Go module                              (✅ fill me in!)
