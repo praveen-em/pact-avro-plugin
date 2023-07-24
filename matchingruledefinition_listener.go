@@ -41,20 +41,18 @@ func(l *MatchingRuleDefinitionListener) getParsedData() (matchType string, match
 func (l *MatchingRuleDefinitionListener) ExitMatchingDefinitionExp(ctx *parser.MatchingDefinitionExpContext) {
 	if ctx.GetChild(FIRST).(*antlr.TerminalNodeImpl).GetText() == "notEmpty" {		
 		l.matchType = ctx.GetChild(FIRST).(*antlr.TerminalNodeImpl).GetText()
-		// log.Println("Match Type: ", l.matchType)
 	}
 }
 
 func (l *MatchingRuleDefinitionListener) ExitMatchingRule(ctx *parser.MatchingRuleContext) {
 	
 	l.matchType = ctx.GetChild(FIRST).(*antlr.TerminalNodeImpl).GetText()
-	// log.Println("Match Type: ", l.matchType)
 
 	if (l.matchType == "regex" || l.matchType == "contentType" || ctx.GetMatcherType() != nil) && (ctx.GetChildCount() >= 3)  {
 		l.matchTypeConfig = strings.Trim(ctx.GetChild(THIRD).(*parser.StringContext).GetText(), "'") 
-		// log.Println("Match Type Config: ", l.matchTypeConfig)
 	}
 
+	// TODO: currently handles for avro bytes.decimal. needs to handle prmitive decimal. Maybe move typeConversion out to a common helper function outside of this.
 	if ctx.DECIMAL_LITERAL() != nil {
 		r := new(big.Rat)
 		var ok bool
@@ -69,7 +67,6 @@ func (l *MatchingRuleDefinitionListener) ExitMatchingRule(ctx *parser.MatchingRu
 		if (err != nil) {
 			log.Println("ERROR while converting string to integer. ", err)
 		}
-		// log.Println("INTEGER: ", l.exampleValue)
 	}
 
 	if ctx.BOOLEAN_LITERAL() != nil {
@@ -83,12 +80,11 @@ func (l *MatchingRuleDefinitionListener) ExitMatchingRule(ctx *parser.MatchingRu
 
 func (l *MatchingRuleDefinitionListener) ExitString(ctx *parser.StringContext) {
 	l.exampleValue = strings.Trim(ctx.GetText(), "'")
-	// log.Println("STRING: ", l.exampleValue)
 }
 
 func (l *MatchingRuleDefinitionListener) ExitPrimitiveValue(ctx *parser.PrimitiveValueContext) {
-	// l.exampleValue = strings.Trim(ctx.GetText(), "'")
-
+	
+	// TODO: currently handles for avro bytes.decimal. needs to handle prmitive decimal. Maybe move typeConversion out to a common helper function outside of this.
 	if ctx.DECIMAL_LITERAL() != nil {
 		r := new(big.Rat)
 		var ok bool
@@ -103,7 +99,6 @@ func (l *MatchingRuleDefinitionListener) ExitPrimitiveValue(ctx *parser.Primitiv
 		if (err != nil) {
 			log.Println("ERROR while converting string to integer. ", err)
 		}
-		// log.Println("INTEGER: ", l.exampleValue)
 	}
 
 	if ctx.BOOLEAN_LITERAL() != nil {

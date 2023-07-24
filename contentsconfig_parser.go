@@ -20,8 +20,11 @@ type configuration struct {
 	schema        avro.Schema
 }
 
+var rules = make(map[string]*plugin.MatchingRules)
+
 func parseContentsConfig(req *plugin.ConfigureInteractionRequest) (*configuration, error) {
 	records := req.GetContentsConfig().GetFields()
+	rulesPath := "$."
 
 	if _, ok := records["pact:schema"]; !ok {
 		err := errors.New("Config item with key 'pact:schema' and the Avro schema string is required")
@@ -34,9 +37,9 @@ func parseContentsConfig(req *plugin.ConfigureInteractionRequest) (*configuratio
 		log.Println("ERROR parsing schema. ", err.Error())
 		return nil, err
 	}
-	log.Println("Schema: ", schema)	
+	log.Println("Schema: ", schema)
 
-	content, rules, err := parseRecords(records, schema)
+	content, err := iterateRecords(records, schema, rules, rulesPath)
 	if err != nil {
 		return nil, err
 	}
@@ -50,88 +53,140 @@ func parseContentsConfig(req *plugin.ConfigureInteractionRequest) (*configuratio
 	return parsedData, err
 }
 
-func parseRecords(records map[string]*structpb.Value, schema avro.Schema) (content map[string]interface{}, rules map[string]*plugin.MatchingRules, err error) {
+func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rules map[string]*plugin.MatchingRules, rulesPath string) (content map[string]interface{}, err error) {
 	content = make(map[string]interface{})
-	rules = make(map[string]*plugin.MatchingRules)
+
 	var (
 		exampleValue    interface{}
 		matchType       string
 		matchTypeConfig string
 	)
 
+	if rulesPath == "" {
+		rulesPath = "$."
+	}
+
 	for key, value := range records {
-		log.Println("ContentsConfig interated:", key, value)
+		// log.Println("ContentsConfig interated:", key, value)
 
 		if !strings.HasPrefix(key, "pact:") {
 			switch value.Kind.(type) {
 			case *structpb.Value_StringValue:
 				expression := value.GetStringValue()
 
-				content[key], matchType, matchTypeConfig, err = parseExpression(expression)
+				exampleValue, matchType, matchTypeConfig, err = parseExpression(expression)
 				if err != nil {
-					return content, rules, err
+					return content, err
 				}
+				content[key] = exampleValue
 
 				matchingRules, err := buildMatchingRules(matchType, matchTypeConfig)
 				if err != nil {
-					return content, rules, err
+					return content, err
 				}
 
-				rules["$."+key] = matchingRules
+				rules[rulesPath+key] = matchingRules
 
 			case *structpb.Value_StructValue:
 				var contentMap map[string]interface{}
-				contentMap, _, err = parseRecords(value.GetStructValue().Fields, schema)
-				if err != nil {
-					return content, rules, err
-				}
+				rulesPath = rulesPath + key + "."
 
-				if isUnion(key, schema) {
-					content[key] = map[string]any{"map": contentMap}
+				contentMap, err = iterateRecords(value.GetStructValue().Fields, schema, rules, rulesPath)
+				if err != nil {
+					return content, err
+				}
+				rulesPath = strings.TrimSuffix(rulesPath, key+".")
+
+				if unionType, ok := isUnion(key, schema); ok {
+					content[key] = map[string]any{unionType: contentMap}
 				} else {
 					content[key] = contentMap
 				}
 
 			case *structpb.Value_ListValue:
 				var contentList []interface{}
+				var contentMap map[string]interface{}
 				valuesList := value.GetListValue().Values
 				for index := range valuesList {
-					// log.Println("List value: ", valuesList[index])
-					expression := valuesList[index].GetStringValue()
 
-					exampleValue, matchType, matchTypeConfig, err = parseExpression(expression)
-					if err != nil {
-						return content, rules, err
+					switch valuesList[index].Kind.(type) {
+					case *structpb.Value_StructValue:
+						contentMap, err = iterateRecords(valuesList[index].GetStructValue().Fields, schema, rules, rulesPath)
+						if err != nil {
+							return content, err
+						}
+
+						contentList = append(contentList, contentMap)
+
+					case *structpb.Value_StringValue:
+						expression := valuesList[index].GetStringValue()
+
+						exampleValue, matchType, matchTypeConfig, err = parseExpression(expression)
+						if err != nil {
+							return content, err
+						}
+
+						contentList = append(contentList, exampleValue)
 					}
 
-					contentList = append(contentList, exampleValue)
 					matchingRules, err := buildMatchingRules(matchType, matchTypeConfig)
 					if err != nil {
-						return content, rules, err
+						return content, err
 					}
-					rules["$."+key] = matchingRules
-				}
+					rules[rulesPath+key] = matchingRules
 
-				if isUnion(key, schema) {
-					content[key] = map[string]any{"array": contentList}
+					if unionType, ok := isUnion(key, schema); ok {
+						content[key] = map[string]any{unionType: contentList}
+					}
 				}
 			}
 		}
 	}
-	log.Println("Parsed content:", content)
-	return content, rules, err
+	// log.Println("Parsed content:", content)
+	// log.Println("Parsed Rules: ", rules)
+	return content, err
 }
 
-func isUnion(key string, schema avro.Schema) (bool) {
-	extract := "fields.#(name=\"" + key + "\").type"
-	result := gjson.Get(schema.String(), extract)
-	return reflect.TypeOf(result.Value()).Kind() == reflect.Slice 
+func isUnion(key string, schema avro.Schema) (unionType string, ok bool) {
+	query := "fields.#(name=\"" + key + "\").type"
+	result := searchJson(schema.String(), query)
+	if (result.Exists()) && (reflect.TypeOf(result.Value()).Kind()) == reflect.Slice {
+		query = "fields.#(name=\"" + key + "\").type.#.type"
+		result := searchJson(schema.String(), query)
+		if result.Exists() {
+			resultSanitized := strings.Trim(result.String(), "[]\"")
+			switch resultSanitized {
+			case "record", "enum", "fixed":
+				query = "fields.#(name=\"" + key + "\").type.#.name"
+				result := searchJson(schema.String(), query)
+				if result.Exists() {
+					resultSanitized = strings.Trim(result.String(), "[]\"")
+				}
+			}
+			return resultSanitized, true
+		}
+	}
+	return "", false
+}
+
+func searchJson(json string, query string) gjson.Result {
+	return gjson.Get(json, query)
+}
+
+func parseExpression(expression string) (exampleValue interface{}, matchType string, matchTypeConfig string, err error) {
+	matchType, matchTypeConfig, exampleValue = parseMatchingRuleDefinition(expression)	
+	exampleValue, err = convertToNativeType(matchType, matchTypeConfig, exampleValue)
+	if err != nil {
+		return exampleValue, matchType, matchTypeConfig, err
+	}
+
+	return exampleValue, matchType, matchTypeConfig, err
 }
 
 func buildMatchingRules(matchType string, matchTypeConfig string) (*plugin.MatchingRules, error) {
 	matchingRules := &plugin.MatchingRules{}
 
-	matchingRule, err := getMatchingRule(matchType, matchTypeConfig)
+	matchingRule, err := buildMatchingRule(matchType, matchTypeConfig)
 	if err != nil {
 		return matchingRules, err
 	}
@@ -140,16 +195,7 @@ func buildMatchingRules(matchType string, matchTypeConfig string) (*plugin.Match
 	return matchingRules, err
 }
 
-func parseExpression(expression string) (exampleValue interface{}, matchType string, matchTypeConfig string, err error) {
-	matchType, matchTypeConfig, exampleValue = parseMatchingRuleDefinition(expression)
-	exampleValue, err = formatDateTime(matchType, matchTypeConfig, exampleValue)
-	if err != nil {
-		return exampleValue, matchType, matchTypeConfig, err
-	}
-	return exampleValue, matchType, matchTypeConfig, err
-}
-
-func getMatchingRule(matchType string, matchTypeConfig string) (matchingRule *plugin.MatchingRule, err error) {
+func buildMatchingRule(matchType string, matchTypeConfig string) (matchingRule *plugin.MatchingRule, err error) {
 	matchingRule = &plugin.MatchingRule{}
 	matchingRule.Type = matchType
 	values := make(map[string]interface{})
@@ -183,14 +229,17 @@ func convertNativeToAvroBinary(schema avro.Schema, data map[string]interface{}) 
 		return nil, err
 	}
 
+	log.Println("Native content: ", data)
+
 	return binary, err
 }
 
-func formatDateTime(matchType string, matchTypeConfig string, exampleValue interface{}) (interface{}, error) {
+func convertToNativeType(matchType string, matchTypeConfig string, exampleValue interface{}) (interface{}, error) {
 	//TODO: cover all date types
 	var err error
-	switch {
-	case matchType == "date":
+	switch matchType {
+
+	case "date":
 		{
 			date, err := time.Parse(matchTypeConfig, exampleValue.(string))
 			if err != nil {
