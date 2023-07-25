@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hamba/avro/v2"
-	plugin "github.com/praveen-em/pact-foobar-plugin/io_pact_plugin"
+	plugin "github.com/praveen-em/pact-avro-plugin/io_pact_plugin"
 	"github.com/tidwall/gjson"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -235,7 +235,7 @@ func convertNativeToAvroBinary(schema avro.Schema, data map[string]interface{}) 
 }
 
 func convertToNativeType(matchType string, matchTypeConfig string, exampleValue interface{}) (interface{}, error) {
-	//TODO: cover all date types
+	//TODO: cover all data types
 	var err error
 	switch matchType {
 

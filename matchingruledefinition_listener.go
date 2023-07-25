@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/antlr4-go/antlr/v4"
-	parser "github.com/praveen-em/pact-foobar-plugin/antlr_auto_generated_parser"
+	parser "github.com/praveen-em/pact-avro-plugin/antlr_auto_generated_parser"
 )
 
 const (

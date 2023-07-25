@@ -1,10 +1,10 @@
-module github.com/praveen-em/pact-foobar-plugin // TODO: change me!
+module github.com/praveen-em/pact-avro-plugin
 
 go 1.18
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hamba/avro/v2 v2.12.0
+	github.com/hamba/avro/v2 v2.13.0
 	github.com/hashicorp/logutils v1.0.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
