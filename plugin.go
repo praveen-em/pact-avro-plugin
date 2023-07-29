@@ -44,7 +44,7 @@ func (m *pluginServer) InitPlugin(ctx context.Context, req *plugin.InitPluginReq
 	return &plugin.InitPluginResponse{
 		Catalogue: []*plugin.CatalogueEntry{
 			{
-				Key:  "foobar",                              // TODO: changeme!
+				Key:  "avro",                              // TODO: changeme!
 				Type: plugin.CatalogueEntry_CONTENT_MATCHER, // TODO: changeme!
 				Values: map[string]string{
 					"content-types": CONTENT_TYPE,
@@ -97,9 +97,6 @@ func (m *pluginServer) ConfigureInteraction(ctx context.Context, req *plugin.Con
 		log.Println("ERROR while parsing ContentsConfig.", err)
 		return nil, err
 	}
-
-	// v := []byte{0,2,3} //temp
-	// avroBinary := v //temp
 
 	var interactions = make([]*plugin.InteractionResponse, 0)
 	if config.contentBinary!= nil {

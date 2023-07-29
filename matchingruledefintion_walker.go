@@ -11,7 +11,13 @@ func parseMatchingRuleDefinition(expression string) (matchType string, matchType
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
 	p := parser.NewMatchingRuleDefinitionParser(stream)
 	tree := p.MatchingDefinition()
-	var listener MatchingRuleDefinitionListener
-	antlr.ParseTreeWalkerDefault.Walk(&listener, tree)
+	listener := new(MatchingRuleDefinitionListener)
+	initListener(listener)
+	antlr.ParseTreeWalkerDefault.Walk(listener, tree)
 	return listener.getParsedData()
+}
+
+func initListener(listener *MatchingRuleDefinitionListener) {
+	listener.exampleValue = make(map[string]interface{})
+	listener.key = "default"
 }
