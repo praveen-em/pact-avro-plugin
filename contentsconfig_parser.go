@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"reflect"
@@ -23,7 +24,7 @@ type configuration struct {
 
 var rules = make(map[string]*plugin.MatchingRules)
 var avroPrimitiveTypes = []string{"null", "boolean", "int", "long", "float", "double", "bytes", "string"}
-var referenceList 	[]string
+var referenceList []string
 
 func parseContentsConfig(req *plugin.ConfigureInteractionRequest) (*configuration, error) {
 	records := req.GetContentsConfig().GetFields()
@@ -61,7 +62,7 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 	var (
 		exampleValue    interface{}
 		matchType       string
-		matchTypeConfig string		
+		matchTypeConfig string
 	)
 
 	if rulesPath == "" {
@@ -70,7 +71,7 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 
 	for key, value := range records {
 		// log.Println("ContentsConfig iterated:", key, value)
-		var isPayload bool		
+		var isPayload bool
 		if !strings.HasPrefix(key, "pact:") || key == "pact:match" {
 			isPayload = true
 		}
@@ -93,18 +94,18 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 				switch matchType {
 				case "values":
 					if s, ok := exampleValue.(string); ok {
-						referenceList = append(referenceList, s)					
+						referenceList = append(referenceList, s)
 						rules[strings.TrimSuffix(rulesPath, ".")] = matchingRules
-					}				
+					}
 
 				default:
 					content[key] = exampleValue
-					if unionType, ok := isUnion(key, schema); ok {					
+					if unionType, ok := isUnion(key, schema); ok {
 						switch {
 						case !slices.Contains(avroPrimitiveTypes, unionType):
 							content[key] = map[string]any{unionType: exampleValue}
 						}
-					} 
+					}
 					rules[rulesPath+key] = matchingRules
 
 				}
@@ -124,7 +125,7 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 					contentGeneric = v
 				}
 
-				if (len(referenceList) > 0) {
+				if len(referenceList) > 0 {
 					for k, v := range contentMap {
 						if slices.Contains(referenceList, k) {
 							contentGeneric = v
@@ -141,13 +142,11 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 					content[key] = contentGeneric
 				}
 
-
-
 			case *structpb.Value_ListValue:
 				var contentList []interface{}
 				var contentMap map[string]interface{}
 				valuesList := value.GetListValue().Values
-				
+
 				for index := range valuesList {
 
 					switch valuesList[index].Kind.(type) {
@@ -156,7 +155,7 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 						contentMap, err = iterateRecords(valuesList[index].GetStructValue().Fields, schema, rules, rulesPath)
 						if err != nil {
 							return content, err
-						}						
+						}
 
 						contentList = append(contentList, contentMap)
 						rulesPath = strings.TrimSuffix(rulesPath, key+".")
@@ -191,7 +190,7 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 	return content, err
 }
 
-//TODO: optimize
+// TODO: optimize
 func isUnion(key string, schema avro.Schema) (unionType string, ok bool) {
 	query := "fields.#(name=\"" + key + "\").type"
 	result := searchJson(schema.String(), query)
@@ -221,9 +220,9 @@ func searchJson(json string, query string) gjson.Result {
 func parseExpression(expression string) (exampleValue interface{}, matchType string, matchTypeConfig string, err error) {
 	matchType, matchTypeConfig, exampleValue = parseMatchingRuleDefinition(expression)
 	var (
-		isMap   bool
+		isMap       bool
 		isReference bool
-		eachKey string
+		eachKey     string
 	)
 	if exampleValueMap, ok := exampleValue.(map[string]interface{}); ok {
 		if v, ok := exampleValueMap["eachKey"]; ok {
@@ -256,7 +255,7 @@ func parseExpression(expression string) (exampleValue interface{}, matchType str
 			}
 
 		}
-	} 
+	}
 
 	exampleValue, err = convertToNativeType(matchType, matchTypeConfig, exampleValue)
 	if err != nil {
@@ -306,6 +305,22 @@ func buildMatchingRule(matchType string, matchTypeConfig string) (matchingRule *
 }
 
 func convertNativeToAvroBinary(schema avro.Schema, data map[string]interface{}) ([]byte, error) {
+	//TODO: remove this temp experiment
+	//temp start
+	var tempData map[string]interface{}
+	err := json.Unmarshal([]byte(schema.String()), &tempData)
+	if err != nil {
+		log.Println("ERROR while marshalling json", err)
+		return nil, err
+	}
+
+	if fields, ok := tempData["fields"].([]interface{}); ok {
+		iterateSchemaFields(parseFields(fields), "", false)
+	}
+	log.Println("Schema Fields: ", schemaTypesContainer)
+	log.Println("Union Fields: ", schemaUnionContainer)
+	//temp end
+
 	log.Println("Native content: ", data)
 
 	binary, err := avro.Marshal(schema, data)
