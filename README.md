@@ -24,9 +24,21 @@ WIP - needs updating
 ├── RELEASING.md      # Instructions on how to release 🚀
 ```
 
-## Supported targets
+## Install
+```
+pact-plugin-cli -y install https://github.com/perodem/pact-avro-plugin/releases/tag/v0.0.1
+```
 
-This code base should automatically create artifacts for the following OS/Architecture combiations:
+## Developing plugin
+### Local Development
+The following command will build the plugin, and install into the correct plugin directory for local development:
+ ```
+ make install_local
+ ```
+You can then reference your plugin in local tests to try it out.
+
+### Supported targets
+This code base automatically create artifacts for the following OS/Architecture combinations:
 
 | OS      | Architecture | Supported |
 | ------- | ------------ | --------- |
@@ -36,3 +48,6 @@ This code base should automatically create artifacts for the following OS/Archit
 | Linux   | arm          | ✅         |
 | Windows | x86_64       | ✅         |
 | Windows | arm          | ✅         |
+
+### Publish plugin
+Follow the steps in [Releasing](./RELEASING.md) to publish a new version of the Plugin. 

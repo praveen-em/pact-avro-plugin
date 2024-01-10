@@ -13,15 +13,20 @@ git push origin v0.0.1
 
 Goreleaser will pick up the new tag, and release it to Github.
 
+## Adding to pkg.go.dev
+[pkg.go.dev](https://pkg.go.dev) is the central source of information about Go packages and modules. By pushing a new release to a public github repo, technically the module is already published. 
+
+Run the [`go list` command](https://pkg.go.dev/cmd/go#hdr-List_packages_or_modules) to prompt Go to update its index of modules with information about the module. Precede the command with a statement to set the `GOPROXY` environment variable to a Go proxy. 
+
+`GOPROXY=proxy.golang.org go list -m example.com/mymodule@v0.1.0`
+
+This will ensure that your request reaches the proxy, and eventually your module appears on pkg.go.dev site. If you still don't see your module or package, you can add it by simply doing any of the steps specified in [pkgsite](https://pkg.go.dev/about#adding-a-package).
+
 ## Commit messages
 
 Pact uses the [Conventional Changelog](https://github.com/bcoe/conventional-changelog-standard/blob/master/convention.md)
 commit message conventions. Please ensure you follow the guidelines, as they
 help us automate our release process.
-
-You can take a look at the git history (`git log`) to get the gist of it.
-If you have questions, feel free to reach out in `#pact-js` in our [slack
-community](https://pact-foundation.slack.com/).
 
 If you'd like to get some CLI assistance, getting setup is easy:
 
