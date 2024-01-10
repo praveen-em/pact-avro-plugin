@@ -14,7 +14,7 @@ git push origin v0.0.1
 Goreleaser will pick up the new tag, and release it to Github.
 
 ## Adding to pkg.go.dev
-[pkg.go.dev](https://pkg.go.dev) is the central source of information about Go packages and modules. By pushing a new release to a public github repo, technically the module is already published. 
+[pkg.go.dev](https://pkg.go.dev) is the central source of information about Go packages and modules. By pushing a new release to a public github repo accessible through a public URL, technically the module is already published. There is no need to upload or publish it anywhere else.
 
 Run the `go list` [command](https://pkg.go.dev/cmd/go#hdr-List_packages_or_modules) to prompt Go to update its index of modules with information about the module. Precede the command with a statement to set the `GOPROXY` environment variable to a Go proxy. 
 
