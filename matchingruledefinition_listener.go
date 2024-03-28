@@ -18,19 +18,19 @@ const (
 type MatchingRuleDefinitionListener struct {
 	*parser.BaseMatchingRuleDefinitionListener
 	exampleValue map[string]interface{}
-	matchType string
-	matchTypeConfig string
+	matchType map[string]interface{}
+	matchTypeConfig map[string]interface{}
 	key string
 }
 
-func(l *MatchingRuleDefinitionListener) getParsedData() (matchType string, matchTypeConfig string, exampleValue interface{}) {
+func(l *MatchingRuleDefinitionListener) getParsedData() (matchType map[string]interface{}, matchTypeConfig map[string]interface{}, exampleValue map[string]interface{}) {
 	return l.matchType, l.matchTypeConfig, l.exampleValue
 }
 
 func (l *MatchingRuleDefinitionListener) EnterMatchingDefinitionExp(ctx *parser.MatchingDefinitionExpContext) {
 	switch ctx.GetChild(FIRST).(*antlr.TerminalNodeImpl).GetText() {
 	case "notEmpty":
-		l.matchType = ctx.GetChild(FIRST).(*antlr.TerminalNodeImpl).GetText()
+		l.matchType[l.key] = ctx.GetChild(FIRST).(*antlr.TerminalNodeImpl).GetText()
 	case "eachKey":
 		l.key = "eachKey"
 	case "eachValue":
@@ -39,11 +39,11 @@ func (l *MatchingRuleDefinitionListener) EnterMatchingDefinitionExp(ctx *parser.
 }
 
 func (l *MatchingRuleDefinitionListener) ExitMatchingRule(ctx *parser.MatchingRuleContext) {
-	
-	l.matchType = ctx.GetChild(FIRST).(*antlr.TerminalNodeImpl).GetText()
 
-	if (l.matchType == "regex" || l.matchType == "contentType" || ctx.GetMatcherType() != nil) && (ctx.GetChildCount() >= 3)  {
-		l.matchTypeConfig = strings.Trim(ctx.GetChild(THIRD).(*parser.StringContext).GetText(), "'") 
+	l.matchType[l.key] = ctx.GetChild(FIRST).(*antlr.TerminalNodeImpl).GetText()
+
+	if (l.matchType[l.key] == "regex" || l.matchType[l.key] == "contentType" || ctx.GetMatcherType() != nil) && (ctx.GetChildCount() >= 3)  {
+		l.matchTypeConfig[l.key] = strings.Trim(ctx.GetChild(THIRD).(*parser.StringContext).GetText(), "'") 
 	}
 
 	// TODO: currently handles for avro bytes.decimal. needs to handle prmitive decimal. Maybe move typeConversion out to a common helper function outside of this.
@@ -72,8 +72,10 @@ func (l *MatchingRuleDefinitionListener) ExitMatchingRule(ctx *parser.MatchingRu
 	}
 
 	if ctx.DOLLAR() != nil {
-		l.matchType = "values"
-		l.exampleValue["reference"] = true
+
+		l.key = "reference"
+		l.exampleValue[l.key] = true
+		l.matchType[l.key] = "values"
 	}
 }
 

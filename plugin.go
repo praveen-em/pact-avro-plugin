@@ -108,6 +108,7 @@ func (m *pluginServer) ConfigureInteraction(ctx context.Context, req *plugin.Con
 			Rules: config.rules,
 		})
 	}
+	log.Println("Rules:", config.rules)
 
 	return &plugin.ConfigureInteractionResponse{
 		Interaction: interactions,

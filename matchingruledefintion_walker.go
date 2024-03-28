@@ -5,7 +5,7 @@ import (
 	parser "github.com/praveen-em/pact-avro-plugin/antlr_auto_generated_parser"
 )
 
-func parseMatchingRuleDefinition(expression string) (matchType string, matchTypeConfig string, exampleValue interface{}) {
+func parseMatchingRuleDefinition(expression string) (matchType map[string]interface{}, matchTypeConfig map[string]interface{}, exampleValue map[string]interface{}) {
 	is := antlr.NewInputStream(expression)
 	lexer := parser.NewMatchingRuleDefinitionLexer(is)
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
@@ -19,5 +19,7 @@ func parseMatchingRuleDefinition(expression string) (matchType string, matchType
 
 func initListener(listener *MatchingRuleDefinitionListener) {
 	listener.exampleValue = make(map[string]interface{})
+	listener.matchType = make(map[string]interface{})
+	listener.matchTypeConfig = make(map[string]interface{})
 	listener.key = "default"
 }

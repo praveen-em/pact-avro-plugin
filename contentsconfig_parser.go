@@ -31,7 +31,7 @@ func parseContentsConfig(req *plugin.ConfigureInteractionRequest) (*configuratio
 	rulesPath := "$."
 
 	if _, ok := records["pact:schema"]; !ok {
-		err := errors.New("Config item with key 'pact:schema' and the Avro schema string is required")
+		err := errors.New("config item with key 'pact:schema' and the avro schema string is required")
 		log.Println(err.Error())
 		return nil, err
 	}
@@ -42,6 +42,7 @@ func parseContentsConfig(req *plugin.ConfigureInteractionRequest) (*configuratio
 		return nil, err
 	}
 	log.Println("Schema: ", schema)
+	log.Println("Records:", records)
 
 	content, err := iterateRecords(records, schema, rules, rulesPath)
 	if err != nil {
@@ -60,9 +61,10 @@ func parseContentsConfig(req *plugin.ConfigureInteractionRequest) (*configuratio
 func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rules map[string]*plugin.MatchingRules, rulesPath string) (content map[string]interface{}, err error) {
 	content = make(map[string]interface{})
 	var (
-		exampleValue    interface{}
-		matchType       string
-		matchTypeConfig string
+		exampleValueMap map[string]interface{}
+		exampleValue	interface{}
+		matchTypeMap	map[string]interface{}
+		matchTypeConfigMap	map[string]interface{}
 	)
 
 	if rulesPath == "" {
@@ -70,7 +72,7 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 	}
 
 	for key, value := range records {
-		// log.Println("ContentsConfig iterated:", key, value)
+		log.Println("ContentsConfig iterated:", key, value)
 		var isPayload bool
 		if !strings.HasPrefix(key, "pact:") || key == "pact:match" {
 			isPayload = true
@@ -81,17 +83,17 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 			case *structpb.Value_StringValue:
 				expression := value.GetStringValue()
 
-				exampleValue, matchType, matchTypeConfig, err = parseExpression(expression)
+				exampleValueMap, exampleValue, matchTypeMap, matchTypeConfigMap, err = parseExpression(expression)
 				if err != nil {
 					return content, err
 				}
 
-				matchingRules, err := buildMatchingRules(matchType, matchTypeConfig)
+				matchingRules, err := buildMatchingRules(matchTypeMap, matchTypeConfigMap, exampleValueMap)
 				if err != nil {
 					return content, err
 				}
 
-				switch matchType {
+				switch matchTypeMap["reference"] {
 				case "values":
 					if s, ok := exampleValue.(string); ok {
 						referenceList = append(referenceList, s)
@@ -163,13 +165,13 @@ func iterateRecords(records map[string]*structpb.Value, schema avro.Schema, rule
 					case *structpb.Value_StringValue:
 						expression := valuesList[index].GetStringValue()
 
-						exampleValue, matchType, matchTypeConfig, err = parseExpression(expression)
+						exampleValueMap, exampleValue, matchTypeMap, matchTypeConfigMap, err = parseExpression(expression)
 						if err != nil {
 							return content, err
 						}
 
 						contentList = append(contentList, exampleValue)
-						matchingRules, err := buildMatchingRules(matchType, matchTypeConfig)
+						matchingRules, err := buildMatchingRules(matchTypeMap, matchTypeConfigMap, exampleValueMap)
 						if err != nil {
 							return content, err
 						}
@@ -217,71 +219,111 @@ func searchJson(json string, query string) gjson.Result {
 	return gjson.Get(json, query)
 }
 
-func parseExpression(expression string) (exampleValue interface{}, matchType string, matchTypeConfig string, err error) {
-	matchType, matchTypeConfig, exampleValue = parseMatchingRuleDefinition(expression)
+func parseExpression(expression string) (exampleValueMap map[string]interface{}, exampleValue interface{}, matchTypeMap map[string]interface{}, matchTypeConfigMap map[string]interface{}, err error) {
+	
+	matchTypeMap, matchTypeConfigMap, exampleValueMap = parseMatchingRuleDefinition(expression)
+	
 	var (
 		isMap       bool
 		isReference bool
 		eachKey     string
 	)
-	if exampleValueMap, ok := exampleValue.(map[string]interface{}); ok {
-		if v, ok := exampleValueMap["eachKey"]; ok {
-			isMap = true
-			eachKey = v.(string)
+
+	if v, ok := exampleValueMap["eachKey"]; ok {
+		matchType, _ := matchTypeMap["eachKey"].(string)
+		matchTypeConfig, _ := matchTypeConfigMap["eachKey"].(string)
+		v, err = convertToNativeType(matchType, matchTypeConfig, v)
+		if err != nil {
+			return exampleValueMap, exampleValue, matchTypeMap, matchTypeConfigMap, err
+		}
+		isMap = true
+		eachKey = v.(string)
+	}
+
+	if _, ok := exampleValueMap["reference"]; ok {
+		isReference = true
+	}
+
+	if v, ok := exampleValueMap["default"]; ok {
+		matchType, _ := matchTypeMap["default"].(string)
+		matchTypeConfig, _ := matchTypeConfigMap["default"].(string)
+		v, err = convertToNativeType(matchType, matchTypeConfig, v)
+		if err != nil {
+			return exampleValueMap, exampleValue, matchTypeMap, matchTypeConfigMap, err
+		}
+		exampleValue = v
+	}
+
+	if v, ok := exampleValueMap["eachValue"]; ok {
+		matchType, _ := matchTypeMap["eachValue"].(string)
+		matchTypeConfig, _ := matchTypeConfigMap["eachValue"].(string)
+		v, err = convertToNativeType(matchType, matchTypeConfig, v)
+		if err != nil {
+			return exampleValueMap, exampleValue, matchTypeMap, matchTypeConfigMap, err
 		}
 
-		if _, ok := exampleValueMap["reference"]; ok {
-			isReference = true
-		}
+		switch {
+		case isMap:
+			m := make(map[string]any)
+			m[eachKey] = v
+			exampleValue = m
 
-		if v, ok := exampleValueMap["default"]; ok {
+		case isReference:
 			exampleValue = v
+
+		default:
+			var s []interface{}
+			s = append(s, v)
+			exampleValue = s
 		}
 
-		if v, ok := exampleValueMap["eachValue"]; ok {
-			switch {
-			case isMap:
-				m := make(map[string]any)
-				m[eachKey] = v
-				exampleValue = m
-
-			case isReference:
-				exampleValue = v
-
-			default:
-				var s []interface{}
-				s = append(s, v)
-				exampleValue = s
-			}
-
-		}
 	}
-
-	exampleValue, err = convertToNativeType(matchType, matchTypeConfig, exampleValue)
-	if err != nil {
-		return exampleValue, matchType, matchTypeConfig, err
-	}
-
-	return exampleValue, matchType, matchTypeConfig, err
+	return exampleValueMap, exampleValue, matchTypeMap, matchTypeConfigMap, err
 }
 
-func buildMatchingRules(matchType string, matchTypeConfig string) (*plugin.MatchingRules, error) {
-	matchingRules := &plugin.MatchingRules{}
+func buildMatchingRules(matchTypeMap map[string]interface{}, matchTypeConfigMap map[string]interface{}, exampleValueMap map[string]interface{}) (*plugin.MatchingRules, error) {
+	matchingRules := &plugin.MatchingRules{}	
+	var err error
 
-	matchingRule, err := buildMatchingRule(matchType, matchTypeConfig)
-	if err != nil {
-		return matchingRules, err
+	for k, v := range exampleValueMap {
+		var matchType, matchTypeConfig string
+		switch k {
+		case "eachKey", "eachValue":
+			if _ , ok := exampleValueMap["reference"]; !ok {
+				eachKeyEachValueMap := make(map[string]interface{})
+				eachKeyEachValueMap[k] = v
+				matchType, _ = matchTypeMap[k].(string)
+				matchTypeConfig, _ := matchTypeConfigMap[k].(string)
+				matchingRule, err := buildMatchingRule(matchType, matchTypeConfig, eachKeyEachValueMap)
+				if err != nil {
+					return matchingRules, err
+				}
+				matchingRules.Rule = append(matchingRules.Rule, matchingRule)
+			}
+
+		default: 
+			matchType, _ = matchTypeMap[k].(string)
+			matchTypeConfig, _ = matchTypeConfigMap[k].(string)
+			matchingRule, err := buildMatchingRule(matchType, matchTypeConfig, nil)
+			if err != nil {
+				return matchingRules, err
+			}
+			matchingRules.Rule = append(matchingRules.Rule, matchingRule)
+		}
+
 	}
-
-	matchingRules.Rule = append(matchingRules.Rule, matchingRule)
+	
 	return matchingRules, err
 }
 
-func buildMatchingRule(matchType string, matchTypeConfig string) (matchingRule *plugin.MatchingRule, err error) {
+func buildMatchingRule(matchType string, matchTypeConfig string, eachKeyEachValueMap map[string]interface{}) (matchingRule *plugin.MatchingRule, err error) {
+	valuesInner := make(map[string]interface{})
+	valuesOuter := make(map[string]interface{})
+	var list []interface{}
 	matchingRule = &plugin.MatchingRule{}
 	matchingRule.Type = matchType
-	values := make(map[string]interface{})
-	values["match"] = matchType
+
+	valuesInner["match"] = matchType
 	if matchTypeConfig != "" {
 		matchTypeConfigKey := "format"
 		switch {
@@ -292,14 +334,27 @@ func buildMatchingRule(matchType string, matchTypeConfig string) (matchingRule *
 		case matchType == "contentType":
 			matchTypeConfigKey = "value"
 		}
-		values[matchTypeConfigKey] = matchTypeConfig
+		valuesInner[matchTypeConfigKey] = matchTypeConfig
 	}
 
-	matchingRule.Values, err = structpb.NewStruct(values)
+	if v, ok := eachKeyEachValueMap["eachKey"]; ok {
+		matchingRule.Type = "eachKey"
+		valuesOuter["value"] = v
+		valuesOuter["rules"] = append(list, valuesInner)
+	} else if v, ok := eachKeyEachValueMap["eachValue"]; ok {
+		matchingRule.Type = "eachValue"
+		valuesOuter["value"] = v
+		valuesOuter["rules"] = append(list, valuesInner)
+	} else {
+		valuesOuter = valuesInner	
+	}
+
+	matchingRule.Values, err = structpb.NewStruct(valuesOuter)
 	if err != nil {
 		log.Println("ERROR while converting from native go to structpb format. ", err)
 		return matchingRule, err
 	}
+	// log.Println("Matching Rule: ", matchingRule)
 	return matchingRule, err
 
 }
