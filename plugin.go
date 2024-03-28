@@ -9,6 +9,7 @@ import (
 	"log"
 	"github.com/google/uuid"
 	plugin "github.com/praveen-em/pact-avro-plugin/io_pact_plugin"
+	ib "github.com/praveen-em/pact-avro-plugin/interaction_builder"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -91,7 +92,7 @@ func (m *pluginServer) ConfigureInteraction(ctx context.Context, req *plugin.Con
 	// 	}, nil
 	// }
 
-	config, err := parseContentsConfig(req)
+	config, err := ib.ParseContentsConfig(req)
 	
 	if (err != nil) {
 		log.Println("ERROR while parsing ContentsConfig.", err)
@@ -99,16 +100,16 @@ func (m *pluginServer) ConfigureInteraction(ctx context.Context, req *plugin.Con
 	}
 
 	var interactions = make([]*plugin.InteractionResponse, 0)
-	if config.contentBinary!= nil {
+	if config.ContentBinary!= nil {
 		interactions = append(interactions, &plugin.InteractionResponse{
 			Contents: &plugin.Body{
 				ContentType: CONTENT_TYPE,
-				Content:     wrapperspb.Bytes(config.contentBinary), // <- ensure format is correct
+				Content:     wrapperspb.Bytes(config.ContentBinary), // <- ensure format is correct
 			},
-			Rules: config.rules,
+			Rules: config.Rules,
 		})
 	}
-	log.Println("Rules:", config.rules)
+	log.Println("Rules:", config.Rules)
 
 	return &plugin.ConfigureInteractionResponse{
 		Interaction: interactions,
@@ -182,7 +183,7 @@ func (m *pluginServer) GenerateContent(ctx context.Context, req *plugin.Generate
 	// Read in the Pact test configuration
 	// This is what is used in the test DSL to specify the plugin specific
 	// interaction details, such as request/response content
-	var config configuration
+	var config ib.Configuration
 	err := json.Unmarshal(req.Contents.Content.Value, &config)
 
 	if err != nil {
@@ -195,7 +196,7 @@ func (m *pluginServer) GenerateContent(ctx context.Context, req *plugin.Generate
 		Contents: &plugin.Body{
 			ContentType: CONTENT_TYPE,
 			// Content:     wrapperspb.Bytes([]byte(config.Response.Body)),
-			Content:     wrapperspb.Bytes(config.contentBinary),
+			Content:     wrapperspb.Bytes(config.ContentBinary),
 		},
 	}, nil
 

@@ -14,7 +14,7 @@ WIP - needs updating
 ├── go.mod            # Go module                              (✅ fill me in!)
 ├── main.go           # Entrypoint for the application
 ├── plugin.go         # Stub gRPC methods for you to implement (✅ fill me in!)
-├── configuration.go  # Type definitions for your plugin's DSL (✅ fill me in!)
+├── interaction_builder/*.go  # Code to configure/build interaction (✅ fill me in!)
 ├── Makefile          # Build configuration                    (✅ fill me in!)
 ├── io_pact_plugin/   # Location of protobuf and gRPC definitions for Plugin Framework
 ├── log.go            # Logging utility
