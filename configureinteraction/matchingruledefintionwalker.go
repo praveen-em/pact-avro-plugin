@@ -1,4 +1,4 @@
-package interaction
+package configureinteraction
 
 import (
 	"github.com/antlr4-go/antlr/v4"

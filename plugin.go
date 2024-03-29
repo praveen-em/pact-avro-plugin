@@ -7,9 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+
 	"github.com/google/uuid"
+	"github.com/praveen-em/pact-avro-plugin/configureinteraction"
 	plugin "github.com/praveen-em/pact-avro-plugin/io_pact_plugin"
-	ib "github.com/praveen-em/pact-avro-plugin/interaction_builder"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -92,7 +93,7 @@ func (m *pluginServer) ConfigureInteraction(ctx context.Context, req *plugin.Con
 	// 	}, nil
 	// }
 
-	config, err := ib.ParseContentsConfig(req)
+	config, err := configureinteraction.ParseContentsConfig(req.ContentsConfig)
 	
 	if (err != nil) {
 		log.Println("ERROR while parsing ContentsConfig.", err)
@@ -183,7 +184,7 @@ func (m *pluginServer) GenerateContent(ctx context.Context, req *plugin.Generate
 	// Read in the Pact test configuration
 	// This is what is used in the test DSL to specify the plugin specific
 	// interaction details, such as request/response content
-	var config ib.Configuration
+	var config configureinteraction.Configuration
 	err := json.Unmarshal(req.Contents.Content.Value, &config)
 
 	if err != nil {

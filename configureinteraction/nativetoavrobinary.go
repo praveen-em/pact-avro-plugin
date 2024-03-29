@@ -1,4 +1,4 @@
-package interaction
+package configureinteraction
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ func convertNativeToAvroBinary(schema avro.Schema, data map[string]interface{}) 
 	}
 
 	if fields, ok := tempData["fields"].([]interface{}); ok {
-		iterateSchemaFields(parseFields(fields), "", false)
+		parseSchemaFields(parseFields(fields), "", false)
 	}
 	log.Println("Schema Fields: ", schemaTypesContainer)
 	log.Println("Union Fields: ", schemaUnionContainer)

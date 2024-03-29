@@ -1,4 +1,4 @@
-package interaction
+package configureinteraction
 
 import (
 	"strings"
@@ -18,7 +18,7 @@ type Field struct {
 var schemaTypesContainer = make(map[string]any)
 var schemaUnionContainer = make(map[string][]any)
 
-func iterateSchemaFields(fields []Field, path string, isUnion bool) {
+func parseSchemaFields(fields []Field, path string, isUnion bool) {
 	for _, field := range fields {
 		switch fieldType := field.Type.(type) {
 		case string:
@@ -28,19 +28,19 @@ func iterateSchemaFields(fields []Field, path string, isUnion bool) {
 				if isUnion {
 					addToTypesContainer(path, "record", true)
 				}
-				iterateSchemaFields(parseFields(field.Fields), path, false)
+				parseSchemaFields(parseFields(field.Fields), path, false)
 			case "array":
 				switch field.Items.(type) {
 				case string:
 					// log.Println("Path:", path, ",Name:", field.Name, ",Type:", field.Type, ",Items:", field.Items)
 					addToTypesContainer(path+field.Name, field.Type.(string)+"."+field.Items.(string)+getLogicalType(field.LogicalType), isUnion)
 				case []interface{}:
-					iterateSchemaFields(parseFields(field.Items.([]interface{})), path, false)
+					parseSchemaFields(parseFields(field.Items.([]interface{})), path, false)
 				case map[string]interface{}:
 					if isUnion {
 						addToTypesContainer(path, "array.record", true)
 					}
-					iterateSchemaFields(parseMapFields(field.Items.(map[string]interface{})), path, false)
+					parseSchemaFields(parseMapFields(field.Items.(map[string]interface{})), path, false)
 				}
 			case "map":
 				switch field.Values.(type) {
@@ -48,12 +48,12 @@ func iterateSchemaFields(fields []Field, path string, isUnion bool) {
 					// log.Println("Path:", path, ",Name:", field.Name, ",Type:", field.Type, ",Values:", field.Values)
 					addToTypesContainer(path+field.Name, field.Type.(string)+"."+field.Values.(string)+getLogicalType(field.LogicalType), isUnion)
 				case []interface{}:
-					iterateSchemaFields(parseFields(field.Items.([]interface{})), path, false)
+					parseSchemaFields(parseFields(field.Items.([]interface{})), path, false)
 				case map[string]interface{}:
 					if isUnion {
 						addToTypesContainer(path, "map.record", true)
 					}
-					iterateSchemaFields(parseMapFields(field.Items.(map[string]interface{})), path, false)
+					parseSchemaFields(parseMapFields(field.Items.(map[string]interface{})), path, false)
 				}
 			case "enum":
 				// log.Println("Path:", path, ",Name:", field.Name, ",Type:", field.Type)
@@ -70,13 +70,13 @@ func iterateSchemaFields(fields []Field, path string, isUnion bool) {
 					// log.Println("Path:", path, ",Name:", "union."+field.Name, ",Type:", subType)
 					addToTypesContainer(path+field.Name, subType, true)
 				case []interface{}:
-					iterateSchemaFields(parseFields(subType), path+field.Name+".", true)
+					parseSchemaFields(parseFields(subType), path+field.Name+".", true)
 				case map[string]interface{}:
-					iterateSchemaFields(parseMapFields(subType), path+field.Name+".", true)
+					parseSchemaFields(parseMapFields(subType), path+field.Name+".", true)
 				}
 			}
 		case map[string]interface{}:
-			iterateSchemaFields(parseMapFields(fieldType), path+field.Name+".", false)
+			parseSchemaFields(parseMapFields(fieldType), path+field.Name+".", false)
 		}
 	}
 }

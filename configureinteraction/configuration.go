@@ -1,10 +1,12 @@
-package interaction
+package configureinteraction
 
 import (
 	"errors"
 	"log"
+
 	"github.com/hamba/avro/v2"
 	plugin "github.com/praveen-em/pact-avro-plugin/io_pact_plugin"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type Configuration struct {
@@ -16,8 +18,8 @@ type Configuration struct {
 
 var rules = make(map[string]*plugin.MatchingRules)
 
-func ParseContentsConfig(req *plugin.ConfigureInteractionRequest) (*Configuration, error) {
-	records := req.GetContentsConfig().GetFields()
+func ParseContentsConfig(ContentsConfig *structpb.Struct) (*Configuration, error) {
+	records := ContentsConfig.GetFields()
 	rulesPath := "$."
 
 	if _, ok := records["pact:schema"]; !ok {
@@ -32,9 +34,8 @@ func ParseContentsConfig(req *plugin.ConfigureInteractionRequest) (*Configuratio
 		return nil, err
 	}
 	log.Println("Schema: ", schema)
-	log.Println("Records:", records)
 
-	content, err := iterateRecords(records, schema, rules, rulesPath)
+	content, err := parseRecords(records, schema, rules, rulesPath)
 	if err != nil {
 		return nil, err
 	}
