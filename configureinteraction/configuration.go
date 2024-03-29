@@ -16,11 +16,8 @@ type Configuration struct {
 	Schema        avro.Schema
 }
 
-var rules = make(map[string]*plugin.MatchingRules)
-
 func ParseContentsConfig(ContentsConfig *structpb.Struct) (*Configuration, error) {
 	records := ContentsConfig.GetFields()
-	rulesPath := "$."
 
 	if _, ok := records["pact:schema"]; !ok {
 		err := errors.New("config item with key 'pact:schema' and the avro schema string is required")
@@ -35,7 +32,7 @@ func ParseContentsConfig(ContentsConfig *structpb.Struct) (*Configuration, error
 	}
 	log.Println("Schema: ", schema)
 
-	content, err := buildInteraction(records, schema, rules, rulesPath)
+	content, rules, err := buildInteraction(records, schema)
 	if err != nil {
 		return nil, err
 	}

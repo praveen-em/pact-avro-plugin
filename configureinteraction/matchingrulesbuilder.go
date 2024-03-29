@@ -79,7 +79,6 @@ func buildMatchingRule(matchType string, matchTypeConfig string, eachKeyEachValu
 		log.Println("ERROR while converting from native go to structpb format. ", err)
 		return matchingRule, err
 	}
-	// log.Println("Matching Rule: ", matchingRule)
 	return matchingRule, err
 
 }

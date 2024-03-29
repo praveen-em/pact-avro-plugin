@@ -20,11 +20,11 @@ func convertNativeToAvroBinary(schema avro.Schema, data map[string]interface{}) 
 	if fields, ok := tempData["fields"].([]interface{}); ok {
 		parseSchemaFields(parseFields(fields), "", false)
 	}
-	log.Println("Schema Fields: ", schemaTypesContainer)
-	log.Println("Union Fields: ", schemaUnionContainer)
+	// log.Println("Schema Fields: ", schemaTypesContainer)
+	// log.Println("Union Fields: ", schemaUnionContainer)
 	//temp end
 
-	log.Println("Native content: ", data)
+	log.Println("Interaction native content: ", data)
 
 	binary, err := avro.Marshal(schema, data)
 	if err != nil {

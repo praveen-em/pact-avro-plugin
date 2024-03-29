@@ -15,7 +15,14 @@ import (
 var avroPrimitiveTypes = []string{"null", "boolean", "int", "long", "float", "double", "bytes", "string"}
 var referenceList []string
 
-func buildInteraction(records map[string]*structpb.Value, schema avro.Schema, rules map[string]*plugin.MatchingRules, rulesPath string) (content map[string]interface{}, err error) {
+func buildInteraction(records map[string]*structpb.Value, schema avro.Schema) (content map[string]interface{}, rules map[string]*plugin.MatchingRules, err error) {
+	rules = make(map[string]*plugin.MatchingRules)
+	rulesPath := "$."
+	content, err = buildInteractionWithRules(records, schema, rules, rulesPath)
+	return content, rules, err
+}
+
+func buildInteractionWithRules(records map[string]*structpb.Value, schema avro.Schema, rules map[string]*plugin.MatchingRules, rulesPath string) (content map[string]interface{}, err error) {
 	content = make(map[string]interface{})
 	var (
 		exampleValueMap    map[string]interface{}
@@ -74,7 +81,7 @@ func buildInteraction(records map[string]*structpb.Value, schema avro.Schema, ru
 				var contentGeneric interface{}
 				rulesPath = rulesPath + key + "."
 
-				contentMap, err = buildInteraction(value.GetStructValue().Fields, schema, rules, rulesPath)
+				contentMap, err = buildInteractionWithRules(value.GetStructValue().Fields, schema, rules, rulesPath)
 				if err != nil {
 					return content, err
 				}
@@ -111,7 +118,7 @@ func buildInteraction(records map[string]*structpb.Value, schema avro.Schema, ru
 					switch valuesList[index].Kind.(type) {
 					case *structpb.Value_StructValue:
 						rulesPath = rulesPath + key + "."
-						contentMap, err = buildInteraction(valuesList[index].GetStructValue().Fields, schema, rules, rulesPath)
+						contentMap, err = buildInteractionWithRules(valuesList[index].GetStructValue().Fields, schema, rules, rulesPath)
 						if err != nil {
 							return content, err
 						}
