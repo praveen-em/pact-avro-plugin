@@ -1,7 +1,6 @@
 package configureinteraction
 
 import (
-	"log"
 	"reflect"
 	"strings"
 
@@ -16,7 +15,7 @@ import (
 var avroPrimitiveTypes = []string{"null", "boolean", "int", "long", "float", "double", "bytes", "string"}
 var referenceList []string
 
-func parseRecords(records map[string]*structpb.Value, schema avro.Schema, rules map[string]*plugin.MatchingRules, rulesPath string) (content map[string]interface{}, err error) {
+func buildInteraction(records map[string]*structpb.Value, schema avro.Schema, rules map[string]*plugin.MatchingRules, rulesPath string) (content map[string]interface{}, err error) {
 	content = make(map[string]interface{})
 	var (
 		exampleValueMap    map[string]interface{}
@@ -30,7 +29,7 @@ func parseRecords(records map[string]*structpb.Value, schema avro.Schema, rules 
 	}
 
 	for key, value := range records {
-		log.Println("ContentsConfig iterated:", key, value)
+		// log.Println("ContentsConfig iterated:", key, value)
 		var isPayload bool
 		if !strings.HasPrefix(key, "pact:") || key == "pact:match" {
 			isPayload = true
@@ -75,7 +74,7 @@ func parseRecords(records map[string]*structpb.Value, schema avro.Schema, rules 
 				var contentGeneric interface{}
 				rulesPath = rulesPath + key + "."
 
-				contentMap, err = parseRecords(value.GetStructValue().Fields, schema, rules, rulesPath)
+				contentMap, err = buildInteraction(value.GetStructValue().Fields, schema, rules, rulesPath)
 				if err != nil {
 					return content, err
 				}
@@ -112,7 +111,7 @@ func parseRecords(records map[string]*structpb.Value, schema avro.Schema, rules 
 					switch valuesList[index].Kind.(type) {
 					case *structpb.Value_StructValue:
 						rulesPath = rulesPath + key + "."
-						contentMap, err = parseRecords(valuesList[index].GetStructValue().Fields, schema, rules, rulesPath)
+						contentMap, err = buildInteraction(valuesList[index].GetStructValue().Fields, schema, rules, rulesPath)
 						if err != nil {
 							return content, err
 						}

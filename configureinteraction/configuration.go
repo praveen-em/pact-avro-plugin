@@ -35,7 +35,7 @@ func ParseContentsConfig(ContentsConfig *structpb.Struct) (*Configuration, error
 	}
 	log.Println("Schema: ", schema)
 
-	content, err := parseRecords(records, schema, rules, rulesPath)
+	content, err := buildInteraction(records, schema, rules, rulesPath)
 	if err != nil {
 		return nil, err
 	}
