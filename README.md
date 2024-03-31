@@ -11,11 +11,11 @@ This plugin supports Avro encoded message paylod for the [Pact](http://docs.pact
 WIP - needs updating
 
 ```
-├── go.mod                  # Go module                                     (✅ fill me in!)
+├── go.mod                  # Go module                                     
 ├── main.go                 # Entrypoint for the application
-├── plugin.go               # Stub gRPC methods for you to implement        (✅ fill me in!)
-├── configureinteraction/   # Parse content and configure pact interaction  (✅ fill me in!)
-├── Makefile                # Build configuration                           (✅ fill me in!)
+├── plugin.go               # Stub gRPC methods (to be implemented)
+├── configureinteraction/   # Implementation to configure pact interaction 
+├── Makefile                # Build configuration
 ├── io_pact_plugin/         # Location of protobuf and gRPC definitions for Plugin Framework
 ├── log.go                  # Logging utility
 ├── pact-plugin.json        # Plugin configuration file
