@@ -5,6 +5,7 @@ import (
 	parser "github.com/praveen-em/pact-avro-plugin/antlr_auto_generated_parser"
 )
 
+// This function makes use of ANTLR generated lexer, listener and parser functions.
 func parseMatchingRuleDefinition(expression string) (matchType map[string]interface{}, matchTypeConfig map[string]interface{}, exampleValue map[string]interface{}) {
 	is := antlr.NewInputStream(expression)
 	lexer := parser.NewMatchingRuleDefinitionLexer(is)
