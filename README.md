@@ -37,8 +37,8 @@ Contributions are welcome!
 | number (integer or decimal) | int, long, float, double, decimal     |
 
 - Matching rules path for eachValue $(reference) needs to be fixed. 
-- Verify interaction based on Matching Rules. This will be easier to implement if FFI is already available for this.  
-- Implement Generators. 
+- Verify interaction based on Matching Rules. This will be relatively easier to implement if FFI is available. Explore.   
+- Implement Generators. This will be relatively easier to implement if FFI is available. Explore. 
 
 ## Plugin usage examples
 Refer to following example projects where this plugin is being used. Please note that these example projects are being constantly updated for various experimentation purposes, so they are not in a robust state yet.   
