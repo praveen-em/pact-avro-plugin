@@ -36,6 +36,7 @@ Contributions are welcome!
 | decimal                     | float, double, decimal (logical type) |
 | number (integer or decimal) | int, long, float, double, decimal     |
 
+- Matching rules path for eachValue $(reference) needs to be fixed. 
 - Verify interaction based on Matching Rules. This will be easier to implement if FFI is already available for this.  
 - Implement Generators. 
 
