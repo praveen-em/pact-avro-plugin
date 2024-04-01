@@ -72,7 +72,7 @@ func convertToNativeType(matchType string, matchTypeConfig string, exampleValue 
 	var err error
 	switch matchType {
 
-	case "date":
+	case "date", "datetime", "time":
 		{
 			date, err := time.Parse(matchTypeConfig, exampleValue.(string))
 			if err != nil {

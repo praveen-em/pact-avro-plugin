@@ -1,14 +1,9 @@
 # Pact Avro Plugin
 
-This plugin supports Avro encoded message paylod for the [Pact](http://docs.pact.io) framework. It is still being built, not ready yet. 
+This plugin supports Avro encoded message paylod for the [Pact](http://docs.pact.io) framework.
 
-**Features:**
-
-* Being built (WIP)
 
 ## Repository Structure
-
-WIP - needs updating
 
 ```
 ├── go.mod                  # Go module                                     
@@ -23,6 +18,32 @@ WIP - needs updating
 ├── server.go               # The gRPC server implementation
 ├── RELEASING.md            # Instructions on how to release 🚀
 ```
+
+## Current State
+The plugin in its current form can do the following
+- Configure/build pact interaction with Avro encoded payload along with matching rules. Works for most of the primitive and complex data types.  
+- Verify interaction. Supports only exact match at the moment.
+
+**To do:**
+
+Contributions are welcome! 
+
+- Still some work required to translate the following Pact DSL logical types to appropriate avro format. This can be acheived by using information from avro schema or adding optional config (indicating avro types) for these logical types and updating Matching Rule Definition Grammar (.g4) accordingly. 
+
+| Pact DSL Logical Type       | Avro                                  |
+| --------------------------- | ------------------------------------- |
+| integer                     | int, long                             |
+| decimal                     | float, double, decimal (logical type) |
+| number (integer or decimal) | int, long, float, double, decimal     |
+
+- Verify interaction based on Matching Rules. This will be easier to implement if FFI is already available for this.  
+- Implement Generators. 
+
+## Plugin usage examples
+Refer to following example projects where this plugin is being used. Please note that these example projects are being constantly updated for various experimentation purposes, so they are not in a robust state yet.   
+
+- [consumer java kafka example](https://github.com/praveen-em/example-consumer-java-kafka-avro)
+- [provider java kafka example](https://github.com/praveen-em/example-provider-java-kafka-avro)
 
 ## Install
 ```

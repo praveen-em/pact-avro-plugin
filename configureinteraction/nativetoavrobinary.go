@@ -8,7 +8,7 @@ import (
 )
 
 func convertNativeToAvroBinary(schema avro.Schema, data map[string]interface{}) ([]byte, error) {
-	//TODO: remove this temp experiment
+	//TODO: this is temp experiment, not used anywhere. To be removed later if the experimentation fails.
 	//temp start
 	var tempData map[string]interface{}
 	err := json.Unmarshal([]byte(schema.String()), &tempData)

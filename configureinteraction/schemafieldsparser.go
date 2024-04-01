@@ -18,6 +18,7 @@ type Field struct {
 var schemaTypesContainer = make(map[string]any)
 var schemaUnionContainer = make(map[string][]any)
 
+//this is a temp experimentation. Not used anywhere at the moment. 
 func parseSchemaFields(fields []Field, path string, isUnion bool) {
 	for _, field := range fields {
 		switch fieldType := field.Type.(type) {
