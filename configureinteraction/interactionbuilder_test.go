@@ -12,8 +12,7 @@ import (
 )
 
 func TestInteractionBuilder(t *testing.T) {
-
-	//TODO: validating entire rules and content here might be an overkill as they are tested seperately? Rulespath and piecing together content, rules and rules path should be main focus of testing in this function. Simplify tests accordinly.
+		
 	type out struct {
 		content string
 		rules string
