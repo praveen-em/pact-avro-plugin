@@ -9,7 +9,7 @@ This plugin supports Avro encoded message paylod for the [Pact](http://docs.pact
 ├── go.mod                  # Go module                                     
 ├── main.go                 # Entrypoint for the application
 ├── plugin.go               # Stub gRPC methods (to be implemented)
-├── configureinteraction/   # Implementation to configure pact interaction 
+├── configureinteraction/   # Implementation to build data required to be presisted in pact file 
 ├── Makefile                # Build configuration
 ├── io_pact_plugin/         # Location of protobuf and gRPC definitions for Plugin Framework
 ├── log.go                  # Logging utility
@@ -32,7 +32,6 @@ Contributions are welcome!
 
 | Pact DSL Logical Type       | Avro                                  |
 | --------------------------- | ------------------------------------- |
-| integer                     | int, long                             |
 | decimal                     | float, double, decimal (logical type) |
 | number (integer or decimal) | int, long, float, double, decimal     |
 

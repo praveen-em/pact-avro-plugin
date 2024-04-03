@@ -41,13 +41,11 @@ var CONTENT_TYPE = "application/avro"
 func (m *pluginServer) InitPlugin(ctx context.Context, req *plugin.InitPluginRequest) (*plugin.InitPluginResponse, error) {
 	log.Println("Received InitPlugin request:", req.Implementation, req.Version)
 
-	// TODO: update this as required
-	// NOTE: Not all plugins will implement both a CONTENT_MATCHER and TRANSPORT
 	return &plugin.InitPluginResponse{
 		Catalogue: []*plugin.CatalogueEntry{
 			{
-				Key:  "avro",                              // TODO: changeme!
-				Type: plugin.CatalogueEntry_CONTENT_MATCHER, // TODO: changeme!
+				Key:  "avro",                              // Updated
+				Type: plugin.CatalogueEntry_CONTENT_MATCHER, // Updated
 				Values: map[string]string{
 					"content-types": CONTENT_TYPE,
 				},
@@ -80,21 +78,7 @@ func (m *pluginServer) UpdateCatalogue(ctx context.Context, cat *plugin.Catalogu
 func (m *pluginServer) ConfigureInteraction(ctx context.Context, req *plugin.ConfigureInteractionRequest) (*plugin.ConfigureInteractionResponse, error) {
 	log.Println("Received ConfigureInteraction request:", req.ContentType, req.ContentsConfig)
 
-	// Extract the incoming plugin configuration from and validate it
-	// Remember - this structure is whatever you designed for your consumer interface
-	// config, err := protoStructToConfigMap(req.ContentsConfig)
-
-	// log.Println("Parsed ContentsConfig:", config.Request.Body, config.Response.Body, err)
-
-	// if err != nil {
-	// 	log.Println("ERROR unmarshalling ContentsConfig from JSON:", err)
-	// 	return &plugin.ConfigureInteractionResponse{
-	// 		Error: err.Error(),
-	// 	}, nil
-	// }
-
-	config, err := configureinteraction.ParseContentsConfig(req.ContentsConfig)
-	
+	config, err := configureinteraction.ParseContentsConfig(req.ContentsConfig)	
 	if (err != nil) {
 		log.Println("ERROR while parsing ContentsConfig.", err)
 		return nil, err

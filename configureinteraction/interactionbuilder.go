@@ -15,7 +15,7 @@ import (
 var avroPrimitiveTypes = []string{"null", "boolean", "int", "long", "float", "double", "bytes", "string"}
 var referenceList []string
 
-func buildInteraction(records map[string]*structpb.Value, schema avro.Schema) (content map[string]interface{}, rules map[string]*plugin.MatchingRules, err error) {
+func buildInteraction(records map[string]*structpb.Value, schema avro.Schema) (content map[string]interface{}, rules map[string]*plugin.MatchingRules, err error) {	
 	rules = make(map[string]*plugin.MatchingRules)
 	rulesPath := "$."
 	content, err = buildInteractionWithRules(records, schema, rules, rulesPath)

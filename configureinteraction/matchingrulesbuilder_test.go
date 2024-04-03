@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
-
 func TestMatchingRulesBuilder(t *testing.T) {
 
 	type in struct {
@@ -32,8 +30,7 @@ func TestMatchingRulesBuilder(t *testing.T) {
 		{
 			name: "RulesType",
 			input: in{exampleValue: map[string]any{"default":"value1"}, matchType: map[string]any{"default": "type"}, matchTypeConfig: map[string]any{} },
-			want: out{rules:`[{"type":"type", "values":{"match":"type"}}]` , err: nil},
-			
+			want: out{rules:`[{"type":"type", "values":{"match":"type"}}]` , err: nil},			
 		},
 		{
 			name: "RulesEqualTo",
@@ -75,10 +72,11 @@ func TestMatchingRulesBuilder(t *testing.T) {
 			input: in{exampleValue: map[string]any{"eachValue":100}, matchType: map[string]any{"eachValue": "type"}, matchTypeConfig: map[string]any{} },
 			want: out{rules:`[{"type":"eachValue","values":{"rules":[{"match":"type"}],"value":100}}]` , err: nil},			
 		},
+		//TODO: Needs rethink on want for RulesEachValueReference
 		{
 			name: "RulesEachValueReference",
 			input: in{exampleValue: map[string]any{"reference": true, "eachValue":"subProducts"}, matchType: map[string]any{"reference": "values", "eachValue":"$"}, matchTypeConfig: map[string]any{} },
-			want: out{rules:`TODO:[{"type":"values","values":{"match":"values"}}]` , err: nil},			
+			want: out{rules:`[{"type":"values","values":{"match":"values"}}]` , err: nil},			
 		},
 		{
 			name: "RulesEachKeyEachValue",
@@ -90,17 +88,20 @@ func TestMatchingRulesBuilder(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T){
 			got := out{}
-			matchingRules, err := buildMatchingRules(test.input.matchType, test.input.matchTypeConfig, test.input.exampleValue)			 
+			rules, err := buildMatchingRules(test.input.matchType, test.input.matchTypeConfig, test.input.exampleValue)			 
 			got.err = err
-			bytes, e := json.Marshal(matchingRules.GetRule())			
-			if e != nil {
-				log.Println("Error while json marshalling, ", e)				
+			require.ErrorIs(t, got.err, test.want.err)
+
+			bytes, err := json.Marshal(rules.GetRule())			
+			if err != nil {
+				log.Println("Error while json marshalling, ", err)				
 			} else {
 				got.rules = string(bytes)
-			}			
+			}	
+					
 			log.Println("got: ",  got.rules)
 			log.Println("want: ", test.want.rules)
-			require.ErrorIs(t, got.err, test.want.err)			
+						
 			assert.JSONEq(t, test.want.rules , got.rules)
 		})
 	}
