@@ -10,7 +10,7 @@ import (
 )
 
 func TestExpresionParser(t *testing.T) {
-
+	t.Parallel() //marks ExpressionParser as capable of running in parallel with other tests
 	type out struct {
 		exampleValueMap    map[string]any
 		exampleValue       any
@@ -19,6 +19,7 @@ func TestExpresionParser(t *testing.T) {
 		err                error
 	}
 
+	//List of test cases (table driven tests)
 	tests := []struct {
 		name string
 		input string
@@ -153,13 +154,21 @@ func TestExpresionParser(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T){
+		test := test 
+		t.Run(test.name, func(t *testing.T){			
+			
+			//Arrange
+			t.Parallel()  //marks each test case as capable of running in parallel with each other
 			got := out{}
+
+			//Act
 			got.exampleValueMap, got.exampleValue, got.matchTypeMap, got.matchTypeConfigMap, got.err = parseExpression(test.input)
 			log.Println("got: ", got.exampleValueMap, got.exampleValue, got.matchTypeMap, got.matchTypeConfigMap, got.err)
 			log.Println("want: ", test.want.exampleValueMap, test.want.exampleValue, test.want.matchTypeMap, test.want.matchTypeConfigMap, test.want.err)
+
+			//Assert
 			require.ErrorIs(t, got.err, test.want.err)
-			assert.Equal(t, test.want.exampleValueMap, got.exampleValueMap)
+			assert.Equal(t, test.want.exampleValueMap, got.exampleValueMap)  //ocassionally seen map comparison fail. https://github.com/stretchr/testify/issues/143
 			assert.Equal(t, test.want.exampleValue, got.exampleValue)
 			assert.Equal(t, test.want.matchTypeMap, got.matchTypeMap)
 			assert.Equal(t, test.want.matchTypeConfigMap, got.matchTypeConfigMap)

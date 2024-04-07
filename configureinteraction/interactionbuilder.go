@@ -66,14 +66,19 @@ func buildInteractionWithRules(records map[string]*structpb.Value, schema avro.S
 
 				default:
 					content[key] = exampleValue
+					//TODO: it doesn't return all data types within a union. Needs fixing/enhancing to return unionTypes.
 					if unionType, ok := isUnion(key, schema); ok {
 						switch {
 						case !slices.Contains(avroPrimitiveTypes, unionType):
 							content[key] = map[string]any{unionType: exampleValue}
 						}
 					}
-					rules[rulesPath+key] = matchingRules
-
+					if key == "pact:match" {
+						rules[strings.TrimSuffix(rulesPath, ".")] = matchingRules
+					} else {
+						rules[rulesPath+key] = matchingRules
+					}
+					
 				}
 
 			case *structpb.Value_StructValue:
@@ -117,7 +122,13 @@ func buildInteractionWithRules(records map[string]*structpb.Value, schema avro.S
 
 					switch valuesList[index].Kind.(type) {
 					case *structpb.Value_StructValue:
-						rulesPath = rulesPath + key + "."
+
+						if len(referenceList) > 0 && slices.Contains(referenceList, key) {																					
+							rulesPath = rulesPath + "*" + "."									
+						} else {
+							rulesPath = rulesPath + key + "."
+						}	
+
 						contentMap, err = buildInteractionWithRules(valuesList[index].GetStructValue().Fields, schema, rules, rulesPath)
 						if err != nil {
 							return content, err

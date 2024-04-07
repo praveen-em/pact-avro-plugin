@@ -9,7 +9,7 @@ This plugin supports Avro encoded message paylod for the [Pact](http://docs.pact
 ├── go.mod                  # Go module                                     
 ├── main.go                 # Entrypoint for the application
 ├── plugin.go               # Stub gRPC methods (to be implemented)
-├── configureinteraction/   # Implementation to build data required to be presisted in pact file 
+├── configureinteraction/   # Implementation to build interaction data for pact file
 ├── Makefile                # Build configuration
 ├── io_pact_plugin/         # Location of protobuf and gRPC definitions for Plugin Framework
 ├── log.go                  # Logging utility
@@ -35,7 +35,7 @@ Contributions are welcome!
 | decimal                     | float, double, decimal (logical type) |
 | number (integer or decimal) | int, long, float, double, decimal     |
 
-- Matching rules path for eachValue $(reference) needs to be fixed. 
+- Matching rules path for certain scenarios needs to be fixed. Failing tests are in place - Implement code to pass those tests.
 - Verify interaction based on Matching Rules. This will be relatively easier to implement if FFI is available. Explore.   
 - Implement Generators. This will be relatively easier to implement if FFI is available. Explore. 
 

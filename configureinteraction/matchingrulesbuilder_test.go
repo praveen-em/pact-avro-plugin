@@ -10,6 +10,7 @@ import (
 )
 
 func TestMatchingRulesBuilder(t *testing.T) {
+	t.Parallel() //marks MatchingRulesBuilder as capable of running in parallel with other tests
 
 	type in struct {
 		exampleValue map[string]any
@@ -22,6 +23,7 @@ func TestMatchingRulesBuilder(t *testing.T) {
 		err error
 	}
 	
+	//List of test cases (table driven tests)
 	tests := []struct {
 		name string
 		input in
@@ -86,22 +88,29 @@ func TestMatchingRulesBuilder(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T){
+
+			//Arrange
+			t.Parallel()  //marks each test case as capable of running in parallel with each other
 			got := out{}
+
+			//Act
 			rules, err := buildMatchingRules(test.input.matchType, test.input.matchTypeConfig, test.input.exampleValue)			 
 			got.err = err
-			require.ErrorIs(t, got.err, test.want.err)
 
 			bytes, err := json.Marshal(rules.GetRule())			
 			if err != nil {
 				log.Println("Error while json marshalling, ", err)				
 			} else {
 				got.rules = string(bytes)
-			}	
-					
+			}
+
 			log.Println("got: ",  got.rules)
 			log.Println("want: ", test.want.rules)
-						
+
+			//Assert
+			require.ErrorIs(t, got.err, test.want.err)				
 			assert.JSONEq(t, test.want.rules , got.rules)
 		})
 	}
