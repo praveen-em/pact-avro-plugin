@@ -183,7 +183,6 @@ func TestInteractionBuilder(t *testing.T) {
 			got.content = jsonMarshal(content)			
 			got.rules = jsonMarshal(rules)				
 
-			log.Println("got content: ",  content)
 			log.Println("got content: ",  got.content)
 			log.Println("want content: ", test.want.content)
 			log.Println("got rules: ",  got.rules)
