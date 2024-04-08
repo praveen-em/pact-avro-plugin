@@ -21,14 +21,12 @@ This plugin supports Avro encoded message paylod for the [Pact](http://docs.pact
 
 ## Current State
 The plugin in its current form can do the following
-- Configure/build pact interaction with Avro encoded payload along with matching rules. Works for most of the primitive and complex data types.  
+- Configure/build pact interaction with Avro encoded payload along with matching rules that are required to be persisited in pact file. Works for most of the primitive and complex data types.  
 - Verify interaction. Supports only exact match at the moment.
 
 **To do:**
 
-Contributions are welcome! 
-
-- Still some work required to translate the following Pact DSL logical types to appropriate avro format. This can be acheived by using information from avro schema or adding optional config (indicating avro types) for these logical types and updating Matching Rule Definition Grammar (.g4) accordingly. 
+- Map the following Pact DSL logical types to appropriate avro format. This can be acheived by using information from avro schema or adding optional config (indicating avro types) for these logical types and updating Matching Rule Definition Grammar (.g4) accordingly. 
 
 | Pact DSL Logical Type       | Avro                                  |
 | --------------------------- | ------------------------------------- |
@@ -36,8 +34,8 @@ Contributions are welcome!
 | number (integer or decimal) | int, long, float, double, decimal     |
 
 - Matching rules path for certain scenarios needs to be fixed. Failing tests are in place - Implement code to pass those tests.
-- Verify interaction based on Matching Rules. This will be relatively easier to implement if FFI is available. Explore.   
-- Implement Generators. This will be relatively easier to implement if FFI is available. Explore. 
+- Verify interaction based on Matching Rules. Explore if FFI is available before starting working on this.
+- Implement Generators. Explore if FFI is available before starting working on this.
 
 ## Plugin usage examples
 Refer to following example projects where this plugin is being used. Please note that these example projects are being constantly updated for various experimentation purposes, so they are not in a robust state yet.   
