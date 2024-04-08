@@ -1,7 +1,6 @@
 package configureinteraction
 
 import (
-	"log"
 	"testing"
 	"time"
 
@@ -155,16 +154,14 @@ func TestExpresionParser(t *testing.T) {
 
 	for _, test := range tests {
 		test := test 
-		t.Run(test.name, func(t *testing.T){			
-			
+		t.Run(test.name, func(t *testing.T){						
 			//Arrange
-			t.Parallel()  //marks each test case as capable of running in parallel with each other
 			got := out{}
 
 			//Act
 			got.exampleValueMap, got.exampleValue, got.matchTypeMap, got.matchTypeConfigMap, got.err = parseExpression(test.input)
-			log.Println("got: ", got.exampleValueMap, got.exampleValue, got.matchTypeMap, got.matchTypeConfigMap, got.err)
-			log.Println("want: ", test.want.exampleValueMap, test.want.exampleValue, test.want.matchTypeMap, test.want.matchTypeConfigMap, test.want.err)
+			// log.Println("got: ", got.exampleValueMap, got.exampleValue, got.matchTypeMap, got.matchTypeConfigMap, got.err)
+			// log.Println("want: ", test.want.exampleValueMap, test.want.exampleValue, test.want.matchTypeMap, test.want.matchTypeConfigMap, test.want.err)
 
 			//Assert
 			require.ErrorIs(t, got.err, test.want.err)

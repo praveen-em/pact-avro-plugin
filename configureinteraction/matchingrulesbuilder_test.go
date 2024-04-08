@@ -90,9 +90,7 @@ func TestMatchingRulesBuilder(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T){
-
 			//Arrange
-			t.Parallel()  //marks each test case as capable of running in parallel with each other
 			got := out{}
 
 			//Act
@@ -105,9 +103,8 @@ func TestMatchingRulesBuilder(t *testing.T) {
 			} else {
 				got.rules = string(bytes)
 			}
-
-			log.Println("got: ",  got.rules)
-			log.Println("want: ", test.want.rules)
+			// log.Println("got: ",  got.rules)
+			// log.Println("want: ", test.want.rules)
 
 			//Assert
 			require.ErrorIs(t, got.err, test.want.err)				

@@ -2,3 +2,6 @@ build
 log
 dist
 *.log
+# .antlr
+# .idea
+# .bsp

@@ -166,9 +166,7 @@ func TestInteractionBuilder(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T){
-
 			//Arrange
-			// t.Parallel() //marks each test case as capable of running in parallel with each other
 			got := out{}
 			records := make(map[string]*structpb.Value)			
 			err := json.Unmarshal([]byte(test.data), &records)
@@ -183,10 +181,10 @@ func TestInteractionBuilder(t *testing.T) {
 			got.content = jsonMarshal(content)			
 			got.rules = jsonMarshal(rules)				
 
-			log.Println("got content: ",  got.content)
-			log.Println("want content: ", test.want.content)
-			log.Println("got rules: ",  got.rules)
-			log.Println("want rules: ", test.want.rules)
+			// log.Println("got content: ",  got.content)
+			// log.Println("want content: ", test.want.content)
+			// log.Println("got rules: ",  got.rules)
+			// log.Println("want rules: ", test.want.rules)
 
 			//Assert
 			require.ErrorIs(t, got.err, test.want.err)							
